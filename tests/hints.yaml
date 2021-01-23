@@ -1,0 +1,6 @@
+tox.ini:
+  - Resources File YAML Path
+  - Coverage options and adapter to run tests with
+  - Path to the Coverage upload YAML Path (conventionally resourcesCov.yaml)
+ALLOWED_EXTENSIONS:
+  - all
