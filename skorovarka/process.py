@@ -22,26 +22,6 @@ def is_lf(file_str: str) -> bool:
     return False
 
 
-# def try_get_lines(
-#     lines: List[str],
-#     index: int,
-#     lines_before: int,
-#     lines_after: int
-# ) -> Tuple[List[str], str, List[str]]:
-#     offset_left: int = index - lines_before
-#     offset_right: int = index + lines_after + 1
-#     maximum: int = len(lines)
-#     if offset_left < 0:
-#         if offset_right > maximum:
-#             return lines[0 : maximum], None, None
-#         else:
-#             return lines[0 : index], lines[index], lines[index + 1 : offset_right]
-#     else:
-#         if offset_right > maximum:
-#             return lines[offset_left : index], lines[index], lines[index + 1 : maximum]
-#         else:
-#             return lines[offset_left : index], lines[index], lines[index + 1 : offset_right]
-
 """
 PATTERN VARIANTS:
 
