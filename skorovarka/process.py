@@ -47,13 +47,13 @@ PATTERN VARIANTS:
 
 **vscode variant**:
 Match small pattern: \$\d+
-Match whole pattern: \$\{\d+:.+\}
+Match whole pattern: \$\{\d+:.+?\}
 Match default label: (?!\$)(?!\{)(?!\d+)(?!:).+(?=\})
 Match numeric label: (?<=\{)\d+(?=:|\})|\$\d+
 
 **custom variant**:
 Match small pattern: \|{3}\d+\|{3}
-Match whole pattern: (\|{3}\d+:)(.+)(\|{3})
+Match whole pattern: (\|{3}\d+:)(.+?)(\|{3})
 Match default label: (?<=\|){3}(?!\d+)(?!:)(.+)(?=\|{3})
 Match numeric label: (?<=\|{3})\d+(?=:|\|{3})
 
@@ -95,6 +95,19 @@ def _repl_token_closure(
     lookup: Dict[str, str],
     hints: List[str]
 ) -> str:
+    """Args:
+    input: single-line input
+    index: line number
+    patterns_s: short patterns dict (e.g. $1, |||1|||)
+    patterns_ext: extended patterns dict (e.g. ${1:blah})
+    patterns_ext_label: sub-patterns matching extendend labels dict
+    patterns_num_label: sub-patterns matching numeric labels dict
+    repl_callback: replacement callback/delegate
+    lookup: label-to-value map with per-file lifecycle
+    hints: list of hints from the YAML recipe file
+
+    Returns: completed input string back to the caller
+    """
     c_input = copy(input)
     for p in chain(patterns_s.values(), patterns_ext.values()):
         m = re.search(p, input)
@@ -132,6 +145,18 @@ def replace_token(
     lookup: Dict[str, str],
     hints: List[str]
 ) -> str:
+    """Closure injecting pattern dicts.
+    The protected method can be reused with
+    consummer's code, while this method provides
+    a simpler signature with default patterns.
+    
+    Args:
+    input: single-line input
+    index: line number
+    repl_callback: replacement callback/delegate
+    lookup: label-to-value map with per-file lifecycle
+    hints: list of hints from the YAML recipe file
+    """
     return _repl_token_closure(
         input, 
         index,
@@ -151,11 +176,21 @@ def replace_tokens(
     repl_callback: Callable[[str, str], str],
     hints: List[str]
 ) -> str:
+    """Takes string content of a template file and
+    runs the replacement loop on it.
+    
+    Args:
+    file_str: full file string
+    newline_symbol: newline symbol used in the file (LF or CRLF)
+    repl_callback: replacement callback/delegate
+    hints: list of hints from the YAML recipe file
+    """
     if newline_symbol in ["\r\n", "\n"]:
         lines = file_str.split(newline_symbol)  # split on newline
     else:
         # assumming the file is one-line or empty
         lines = file_str
+    # purged file-to-file
     lookup: Dict[str, str] = dict()
     filled_in_lines = []
     for idx, line in enumerate(lines):
@@ -164,21 +199,19 @@ def replace_tokens(
     return newline_symbol.join(filled_in_lines)
 
 
-# def default_line_display_handler(
-#     current_line: str,
-#     current_line_idx: int,
-#     lines_before: List[str], 
-#     lines_after: List[str], 
-#     newline_symbol: str
-# ):
-#     for i, l in zip(range(len(lines_before)-1, -1, -1), lines_before):
-#         print(str(current_line_idx - i) + " |" + l)
-#     print(str(current_line_idx) + " |" + current_line)
-#     for i, l in enumerate(lines_after):
-#         print(str(current_line_idx + i) + " |" + l)
+def default_replacement_callback(
+    default_label: str=None, 
+    numeric_label: str=None
+) -> str:
+    """Default handler for input replacement.
+    A different callback can be used to e.g.
+    provide a non-interactive interface for this
+    in the future if needed.
 
-
-def default_replacement_callback(default_label: str=None, numeric_label: str=None) -> str:
+    Args:
+    default_label = optional default label found on tokens
+    numeric_label = numeric label of the token
+    """
     # hint = hint_lookup(numeric_label)
     hint = None
     not_done = True
@@ -209,6 +242,13 @@ def process_file(
     repl_callback: Callable[[str, str], str],
     hints: List[str]
 ) -> str:
+    """Handles single file with different types of newline symbols.
+
+    Args:
+    file_str: full file string
+    repl_callback: replacement callback/delegate
+    hints: list of hints from the YAML recipe file
+    """
     if is_crlf(file_str):
         return replace_tokens(
             file_str, 
@@ -224,16 +264,13 @@ def process_file(
             hints
         )
     else:
+        # if not CRLF, neither LF found, single-line file is assumed
         return replace_tokens(
             file_str,
             "", 
             repl_callback,
             hints
         )
-        # raise Exception(
-        #     "Line ending style not supported! " +\
-        #     "Convert the file to CRLF or LF."
-        # )
 
 
 def process_directory(
@@ -242,8 +279,17 @@ def process_directory(
     repl_callback: Callable[[str, str], str],
     hint_file_path: str=None
 ):
+    """Processes all the files in the directory
+
+    Args:
+    path: path to the directory with template files
+    destination: destination directory
+    repl_callback: replacement callback/delegate
+    hint_file_path: path to the YAML file with hints
+    """
 
     def handle_file(file_path, hint_file):
+        # FIXME: tree not preserved correctly
         print(f"FILE: {file_path}")
         hint_query = ""
         for segment1, segment2 in zip(os.path.split(path), os.path.split(file_path)):
