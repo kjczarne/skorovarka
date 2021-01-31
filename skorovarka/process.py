@@ -268,7 +268,7 @@ def process_directory(
     """
 
     def handle_file(file_path, subdirs, hint_file):
-        cprint(f"FILE: {file_path}", "yellow")
+        cprint(f"FILE: {file_path}", "magenta")
         hint_query = ""
         for segment1, segment2 in zip(os.path.split(path), os.path.split(file_path)):
             if segment1 != segment2:
