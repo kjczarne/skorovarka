@@ -69,8 +69,8 @@ PATTERNS_SMALL = {
 }
 
 PATTERNS_EXTENDED_WHOLE = {
-    "var1": r'\$\{\d+:.+\}',
-    "var2": r'(\|{3}\d+:)(.+)(\|{3})'
+    "var1": r'\$\{\d+:.+?\}',
+    "var2": r'(\|{3}\d+:)(.+?)(\|{3})'
 }
 
 PATTERNS_EXTENDED_LABEL = {
