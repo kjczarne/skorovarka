@@ -6,6 +6,7 @@ from .parse_yaml import parse_yaml
 from copy import copy
 import os
 import warnings
+from termcolor import cprint
 
 def walk_and_prompt(recipe_dir: str, output_dir: str):
     pass
@@ -93,7 +94,7 @@ def _repl_token_closure(
         m = re.search(p, input)
         repl = None
         if m:
-            print(f"Line {index}: {input}\n")
+            cprint(f"Line {index}: {input}\n", "yellow")
             label = ""
             for p2 in patterns_ext_label.values():
                 m2 = re.search(p2, m.group())
@@ -104,7 +105,7 @@ def _repl_token_closure(
                 if m3:
                     if hints:
                         try:
-                            print(f"HINT: {hints[int(m3.group())-1]}")
+                            cprint(f"HINT: {hints[int(m3.group())-1]}", "blue")
                         except IndexError:
                             pass
                     # FIXME: Windows slash??
@@ -198,11 +199,11 @@ def default_replacement_callback(
     # TODO: hint handling!
     while not_done:
         if hint:
-            print(f"LABEL: {numeric_label}; {hint}")
+            cprint(f"LABEL: {numeric_label}; {hint}", "green")
         else:
-            print(f"LABEL: {numeric_label}")
+            cprint(f"LABEL: {numeric_label}", "green")
         if default_label:
-            print(f"Default value: {default_label} ||||| hit enter to use default.")
+            cprint(f"Default value: {default_label} ||||| hit enter to use default.", "cyan")
         stdin = input("Value: ")
         if len(stdin) > 0:
             not_done = False
@@ -270,7 +271,7 @@ def process_directory(
 
     def handle_file(file_path, hint_file):
         # FIXME: tree not preserved correctly
-        print(f"FILE: {file_path}")
+        cprint(f"FILE: {file_path}", "yellow")
         hint_query = ""
         for segment1, segment2 in zip(os.path.split(path), os.path.split(file_path)):
             if segment1 != segment2:

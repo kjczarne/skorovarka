@@ -3,7 +3,8 @@ from setuptools import setup, find_packages
 DEPENDENCIES = [
     "mypy",
     "pyyaml",
-    "pylint"
+    "pylint",
+    "termcolor"
 ]
 
 readme = open('README.md', 'r')
