@@ -8,8 +8,6 @@ import os
 import warnings
 from termcolor import cprint
 
-def walk_and_prompt(recipe_dir: str, output_dir: str):
-    pass
 
 def is_crlf(file_str: str) -> bool:
     if file_str.find("\r\n") != -1:
@@ -23,7 +21,7 @@ def is_lf(file_str: str) -> bool:
     return False
 
 
-"""
+r"""
 PATTERN VARIANTS:
 
 **vscode variant**:
@@ -269,8 +267,7 @@ def process_directory(
     hint_file_path: path to the YAML file with hints
     """
 
-    def handle_file(file_path, hint_file):
-        # FIXME: tree not preserved correctly
+    def handle_file(file_path, subdirs, hint_file):
         cprint(f"FILE: {file_path}", "yellow")
         hint_query = ""
         for segment1, segment2 in zip(os.path.split(path), os.path.split(file_path)):
@@ -289,9 +286,12 @@ def process_directory(
             hints)
         if not os.path.exists(destination):
             os.makedirs(destination)
-        if not os.path.isdir(destination):
+        path_with_subdirs = os.path.join(destination, *subdirs)
+        if not os.path.exists(path_with_subdirs):
+            os.makedirs(path_with_subdirs)
+        if not os.path.isdir(path_with_subdirs):
             raise Exception("--out parameter should be a directory, not file!")
-        with open(os.path.join(destination, filename), "w") as f:
+        with open(os.path.join(path_with_subdirs, filename), "w") as f:
             f.write(filled_in_file)
     
     hint_file: Dict[str, List[str]] = None
@@ -313,18 +313,26 @@ def process_directory(
 
 
     if os.path.isfile(path):
-        handle_file(path, hint_file)
+        handle_file(path, [], hint_file)
     
     elif os.path.isdir(path):
         for root, _, files in os.walk(path):
+            # get subdirs from the base `path` for a file
+            base_list = os.path.normpath(path).split(os.sep)
+            root_list = os.path.normpath(root).split(os.sep)
+            root_list_copy = copy(root_list)
+            for idx, segment in enumerate(base_list):
+                if root_list[idx] == segment:
+                    root_list_copy = root_list_copy[1:]
+            # now root_list copy contains the remaining dirs in the path
             for name in files:
                 file_path = os.path.join(root, name)
                 if allowed_extensions:
                     for ext in allowed_extensions:
                         if name.lower().endswith(ext):
-                            handle_file(file_path, hint_file)
+                            handle_file(file_path, root_list_copy, hint_file)
                 else:
-                    handle_file(file_path, hint_file)
+                    handle_file(file_path, root_list_copy, hint_file)
     else:
         raise Exception(
             "The recipe path seems to be wrong. " + \
